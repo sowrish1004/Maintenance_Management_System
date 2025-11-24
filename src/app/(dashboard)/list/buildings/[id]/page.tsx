@@ -7,9 +7,9 @@ export default async function EditBuildingPage({
   params,
 }: {
   
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
 
   const building = await prisma.building.findUnique({
     where: { id },
