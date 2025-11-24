@@ -198,7 +198,7 @@ const InspectionForm = ({
              <div className="text-center py-6 text-yellow-600 text-sm bg-yellow-50 p-2 rounded border border-yellow-200">
                  No data categories configured for this building.
                  <br/>
-                 <span className="text-xs">(Go to Buildings page and click "Manage" to add some!)</span>
+                 <span className="text-xs">(Go to Buildings page and click &quot;Manage&quot; to add some!)</span>
              </div>
         )}
 

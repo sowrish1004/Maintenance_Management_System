@@ -48,7 +48,7 @@ const MyRecentInspections = async ({ className }: { className?: string }) => {
         ))}
         {recents.length === 0 && (
           <div className="text-center py-12 text-gray-400 text-sm flex flex-col items-center gap-2 border-2 border-dashed rounded-lg">
-             <p>You haven't submitted any inspections yet.</p>
+             <p>You haven&apos;t submitted any inspections yet.</p>
           </div>
         )}
       </div>
