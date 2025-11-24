@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMINISTRATOR
+  TECHNICIAN
+}
+
+enum CategoryType {
+  NUMBER
+  ON_OFF
+}
+
+// 4. MODELS: Define the structure of your database tables.
+
+// ## User Model ##
+model User {
+  id        String   @id @default(cuid()) // Using CUIDs for unique IDs
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation: A User can perform many Rounds
+  inspections Inspection[]
+}
+
+// ## Building Model ##
+model Building {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation: A Building has many DataCategories
+  dataCategories DataCategory[]
+  // Relation: Many Rounds can be performed in a Building
+  inspections    Inspection[]
+}
+
+// ## DataCategory Model ##
+// This is now its own table, linked to a Building.
+model DataCategory {
+  id   String       @id @default(cuid())
+  name String
+  type CategoryType
+
+  // Relation to Building
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  buildingId String
+
+  // Relation: A DataCategory can be part of many Readings
+  readings Reading[]
+}
+
+// ## Round Model ##
+model Inspection {
+  id        String   @id @default(cuid())
+  date      DateTime
+  notes     String? // The note is optional
+  createdAt DateTime @default(now())
+
+  // Relation to User (Technician)
+  technician   User   @relation(fields: [technicianId], references: [id])
+  technicianId String
+
+  // Relation to Building
+  building   Building @relation(fields: [buildingId], references: [id])
+  buildingId String
+
+  // Relation: A Round contains many Readings
+  readings Reading[]
+}
+
+// ## Reading Model ##
+// This is now its own table, linking a Round and a DataCategory.
+model Reading {
+  id String @id @default(cuid())
+
+  // --- MODIFIED SECTION ---
+  // The value is now stored based on its type.
+  // The '?' makes them optional, as only one will be present per reading.
+  numericalValue Float?
+  booleanValue   Boolean?
+  // --- END MODIFIED SECTION ---
+
+  // Relation to the parent Round
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  inspectionId String
+
+  // Relation to the specific category being read
+  category   DataCategory @relation(fields: [categoryId], references: [id])
+  categoryId String
+}

@@ -1,0 +1,99 @@
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+enum Role {
+  ADMINISTRATOR
+  TECHNICIAN
+}
+
+enum CategoryType {
+  NUMBER
+  ON_OFF
+}
+
+// User Table
+model User {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation: A User can perform many Inspections
+  inspections Inspection[]
+}
+
+// Building Table
+model Building {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation: A Building has many DataCategories
+  dataCategories DataCategory[]
+  // Relation: Many Rounds can be performed in a Building
+  inspections         Inspection[]
+}
+
+// DataCategory Table
+model DataCategory {
+  id   String       @id @default(cuid())
+  name String       
+  type CategoryType
+
+  // Relation to Building
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  buildingId String
+
+  // Relation: A DataCategory can be part of many Readings
+  readings Reading[]
+}
+
+// Inspection Table
+model Inspection {
+  id        String   @id @default(cuid())
+  date      DateTime
+  notes     String? // The note is optional
+  createdAt DateTime @default(now())
+
+  // Relation to User (Technician)
+  technician   User   @relation(fields: [technicianId], references: [id])
+  technicianId String
+
+  // Relation to Building
+  building   Building @relation(fields: [buildingId], references: [id])
+  buildingId String
+
+  // Relation: A Round contains many Readings
+  readings Reading[]
+}
+
+// Reading Table
+model Reading {
+  id    String @id @default(cuid())
+  numericalValue Float?
+  booleanValue    Boolean?
+  // Relation to the parent Round
+  inspection   Inspection  @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  inspectionId String
+
+  // Relation to the specific category being read
+  category   DataCategory @relation(fields: [categoryId], references: [id])
+  categoryId String
+  @@unique([inspectionId, categoryId])
+}
