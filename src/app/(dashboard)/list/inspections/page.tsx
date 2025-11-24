@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -5,9 +7,9 @@ import prisma from "@/lib/prisma";
 import FormModal from "@/components/FormModal";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
-import { currentUserId, role } from "@/lib/utils";
 import Link from "next/link";
 import { Eye } from "lucide-react";
+import { auth } from "@clerk/nextjs/server";
 
 type InspectionRecord = {
   id: string;
@@ -23,7 +25,8 @@ const columns = [
   { header: "Actions", accessor: "actions" },
 ];
 
-const renderRow = (item: InspectionRecord) => (
+
+const renderRow = (item: InspectionRecord, role?: string) => (
   <tr
     key={item.id}
     className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-msPurpleLight"
@@ -33,20 +36,29 @@ const renderRow = (item: InspectionRecord) => (
     <td className="hidden md:table-cell">{item.technicianName}</td>
     <td>
       <div className="flex items-center gap-2">
-        {/*View Button*/}
-        <Link
-          href={`/inspections/${item.id}/view`}
-          className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
-          title="View Details"
+        <div 
+          className="cursor-pointer"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
         >
-          <Eye className="h-4 w-4" />
-        </Link>
-
-      
+            <Link
+            href={`/inspections/${item.id}/view`}
+            className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors block"
+            title="View Details"
+            >
+            <Eye className="h-4 w-4" />
+            </Link>
+        </div>
         
-        {/* Delete button 'restricted to admins' */}
         {role === "administrator" && (
-          <FormModal table="inspection" type="delete" id={item.id} />
+           <div 
+             onClick={(e) => e.stopPropagation()}
+             onMouseDown={(e) => e.stopPropagation()}
+             onMouseUp={(e) => e.stopPropagation()}
+           >
+              <FormModal table="inspection" type="delete" id={item.id} />
+           </div>
         )}
       </div>
     </td>
@@ -58,12 +70,16 @@ export default async function InspectionListPage({
 }: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
+  const { sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
   const params = await searchParams;
   const { page, search } = params;
   const pageNumber = Math.max(1, Number(page) || 1);
 
   const whereClause: Prisma.InspectionWhereInput = {
-    ...(role === "TECHNICIAN" ? { technicianId: currentUserId! } : {}),
+    ...(role === "technician" ? { technicianId: (await auth()).userId! } : {}),
+
     ...(search
       ? {
           OR: [
@@ -76,7 +92,6 @@ export default async function InspectionListPage({
       : {}),
   };
 
-  // Fetch inspections
   const [data, count] = await prisma.$transaction([
     prisma.inspection.findMany({
       where: whereClause,
@@ -107,7 +122,11 @@ export default async function InspectionListPage({
         </div>
       </div>
 
-      <Table columns={columns} renderRow={renderRow} data={formattedData} />
+      <Table 
+        columns={columns} 
+        renderRow={(item) => renderRow(item, role)} 
+        data={formattedData} 
+      />
       <Pagination page={pageNumber} count={count} />
     </div>
   );
