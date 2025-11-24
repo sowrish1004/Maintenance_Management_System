@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -5,8 +7,8 @@ import prisma from "@/lib/prisma";
 import FormModal from "@/components/FormModal";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
-import { role } from "@/lib/utils"; 
-import Link from "next/link"; 
+import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 
 type BuildingRecord = {
   id: string;
@@ -22,7 +24,7 @@ const columns = [
   { header: "Actions", accessor: "actions" },
 ];
 
-const renderRow = (item: BuildingRecord) => (
+const renderRow = (item: BuildingRecord, role?: string) => (
   <tr
     key={item.id}
     className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-msPurpleLight"
@@ -45,6 +47,7 @@ const renderRow = (item: BuildingRecord) => (
         </Link>
 
         <FormModal table="building" type="update" data={item} />
+        
         {role === "administrator" && (
           <FormModal table="building" type="delete" id={item.id} />
         )}
@@ -58,6 +61,9 @@ export default async function BuildingListPage({
 }: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
+  const { sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
   const params = await searchParams;
   const { page, search } = params;
   const pageNumber = Math.max(1, Number(page) || 1);
@@ -102,7 +108,11 @@ export default async function BuildingListPage({
         </div>
       </div>
 
-      <Table columns={columns} renderRow={renderRow} data={formattedData} />
+      <Table 
+        columns={columns} 
+        renderRow={(item) => renderRow(item, role)} 
+        data={formattedData} 
+      />
       <Pagination page={pageNumber} count={count} />
     </div>
   );
