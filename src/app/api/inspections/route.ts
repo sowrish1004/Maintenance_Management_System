@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createInspectionSchema } from "@/lib/formValidationSchemas";
+import { ensureUser } from "@/lib/userSync";
 
 // Fetch all inspections
 export async function GET(request: Request) {
@@ -35,6 +36,7 @@ export async function GET(request: Request) {
 // Creating new inspections + post
 export async function POST(req: Request) {
   try {
+    await ensureUser();
     const body = await req.json();
     const headerData = {
         date: body.date, 

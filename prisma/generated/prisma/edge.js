@@ -178,7 +178,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\s574336\\OneDrive - nwmissouri.edu\\Documents\\Academics\\2025 Fall\\Capstone\\Maintainence Management System\\prisma\\generated\\prisma",
+      "value": "E:\\Projects\\MaintXperts\\Maintenance_Management_System\\prisma\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -192,12 +192,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\s574336\\OneDrive - nwmissouri.edu\\Documents\\Academics\\2025 Fall\\Capstone\\Maintainence Management System\\prisma\\schema.prisma",
+    "sourceFilePath": "E:\\Projects\\MaintXperts\\Maintenance_Management_System\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../..",
   "clientVersion": "6.17.1",
@@ -206,6 +205,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {

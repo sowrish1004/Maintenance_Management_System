@@ -30,8 +30,8 @@ const SelectField = ({
       <label className="text-xs text-gray-500">{label}</label>
       <select
         {...(register ? register(name) : {})}
-        value={value}
-        onChange={onChange}
+        {...(value !== undefined ? { value } : {})}
+        {...(onChange !== undefined ? { onChange } : {})}
         defaultValue={defaultValue}
         className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
       >
