@@ -213,12 +213,12 @@ const InspectionForm = ({
                   step="any"
                   placeholder="Value"
                   {...register(`reading_${cat.id}`)}
-                  className="w-32 p-2 text-sm border rounded-md ring-[1.5px] ring-gray-200 focus:ring-blue-400 outline-none transition-all"
+                  className="w-32 p-2 text-sm border rounded-md ring-[1.5px] ring-gray-300 focus:ring-blue-400 outline-none transition-all"
                 />
               ) : (
                 <select
                   {...register(`reading_${cat.id}`)}
-                   className="w-32 p-2 text-sm border rounded-md ring-[1.5px] ring-gray-200 focus:ring-blue-400 outline-none transition-all"
+                   className="w-32 p-2 text-sm border rounded-md ring-[1.5px] ring-gray-300 focus:ring-blue-400 outline-none transition-all"
                 >
                   <option value="">- Select -</option>
                   <option value="true">PASS / ON</option>
