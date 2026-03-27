@@ -5,11 +5,11 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import FormModal from "@/components/FormModal";
+import InspectionActions from "@/components/InspectionActions";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
-import Link from "next/link";
-import { Eye } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
+import { ensureUser } from "@/lib/userSync";
 
 type InspectionRecord = {
   id: string;
@@ -25,7 +25,6 @@ const columns = [
   { header: "Actions", accessor: "actions" },
 ];
 
-
 const renderRow = (item: InspectionRecord, role?: string) => (
   <tr
     key={item.id}
@@ -35,32 +34,7 @@ const renderRow = (item: InspectionRecord, role?: string) => (
     <td className="hidden md:table-cell">{item.buildingName}</td>
     <td className="hidden md:table-cell">{item.technicianName}</td>
     <td>
-      <div className="flex items-center gap-2">
-        <div 
-          className="cursor-pointer"
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onMouseUp={(e) => e.stopPropagation()}
-        >
-            <Link
-            href={`/inspections/${item.id}/view`}
-            className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors block"
-            title="View Details"
-            >
-            <Eye className="h-4 w-4" />
-            </Link>
-        </div>
-        
-        {role === "administrator" && (
-           <div 
-             onClick={(e) => e.stopPropagation()}
-             onMouseDown={(e) => e.stopPropagation()}
-             onMouseUp={(e) => e.stopPropagation()}
-           >
-              <FormModal table="inspection" type="delete" id={item.id} />
-           </div>
-        )}
-      </div>
+      <InspectionActions id={item.id} role={role} />
     </td>
   </tr>
 );
@@ -72,6 +46,8 @@ export default async function InspectionListPage({
 }) {
   const { sessionClaims } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  await ensureUser();
 
   const params = await searchParams;
   const { page, search } = params;
@@ -92,23 +68,33 @@ export default async function InspectionListPage({
       : {}),
   };
 
-  const [data, count] = await prisma.$transaction([
-    prisma.inspection.findMany({
-      where: whereClause,
-      include: { building: true, technician: true },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (pageNumber - 1),
-      orderBy: { date: "desc" },
-    }),
-    prisma.inspection.count({ where: whereClause }),
-  ]);
+  let formattedData: InspectionRecord[] = [];
+  let count = 0;
+  let queryError: string | null = null;
 
-  const formattedData = data.map((i) => ({
-    id: i.id,
-    date: i.date.toISOString().split("T")[0],
-    buildingName: i.building?.name || "N/A",
-    technicianName: `${i.technician?.firstName || ""} ${i.technician?.lastName || ""}`.trim(),
-  }));
+  try {
+    const [data, totalCount] = await prisma.$transaction([
+      prisma.inspection.findMany({
+        where: whereClause,
+        include: { building: true, technician: true },
+        take: ITEM_PER_PAGE,
+        skip: ITEM_PER_PAGE * (pageNumber - 1),
+        orderBy: { date: "desc" },
+      }),
+      prisma.inspection.count({ where: whereClause }),
+    ]);
+
+    count = totalCount;
+    formattedData = data.map((i) => ({
+      id: i.id,
+      date: i.date.toLocaleDateString("en-CA"),
+      buildingName: i.building?.name || "N/A",
+      technicianName: `${i.technician?.firstName || ""} ${i.technician?.lastName || ""}`.trim(),
+    }));
+  } catch (err) {
+    console.error("Failed to fetch inspections:", err);
+    queryError = "Unable to load inspections. Please try again later.";
+  }
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0 h-290px">
@@ -122,10 +108,16 @@ export default async function InspectionListPage({
         </div>
       </div>
 
-      <Table 
-        columns={columns} 
-        renderRow={(item) => renderRow(item, role)} 
-        data={formattedData} 
+      {queryError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm my-2">
+          {queryError}
+        </div>
+      )}
+
+      <Table
+        columns={columns}
+        renderRow={(item) => renderRow(item, role)}
+        data={formattedData}
       />
       <Pagination page={pageNumber} count={count} />
     </div>

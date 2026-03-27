@@ -9,6 +9,7 @@ import { createInspectionSchema } from "@/lib/formValidationSchemas";
 import { z } from "zod";
 import { useUser } from "@clerk/nextjs";
 import InputField from "@/components/forms/InputField";
+import SelectField from "@/components/forms/SelectField";
 import TextareaField from "@/components/forms/TextareaField";
 import { Loader2 } from "lucide-react";
 
@@ -162,21 +163,18 @@ const InspectionForm = ({
             <input type="hidden" {...register("technicianId")} />
         </div>
 
-        <div className="md:col-span-2 flex flex-col gap-2">
-           <label className="text-xs text-gray-500">Building</label>
-           <select
-            {...register("buildingId")}
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-           >
-            <option value="">-- Select a Building --</option>
-            {buildings.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-           </select>
-           {errors.buildingId && (
-             <p className="text-xs text-red-400">{errors.buildingId.message?.toString()}</p>
-           )}
-        </div>
+        <SelectField
+          label="Building"
+          name="buildingId"
+          register={register}
+          error={errors.buildingId as any}
+          className="md:col-span-2"
+        >
+          <option value="">-- Select a Building --</option>
+          {buildings.map((b) => (
+            <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+        </SelectField>
       </div>
 
       <div className="border rounded-lg p-4 bg-slate-50 min-h-[100px]">
